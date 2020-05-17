@@ -1,19 +1,19 @@
 import http from "../http-common";
 
 const getAll = () => {
-  return http.get("/tutorials");
+  return http.get("/tutorials?limit=10");
 };
 
-const create = data => {
+const create = (data) => {
   return http.post("/tutorials", data);
 };
 
-const findByTitle = title => {
-  return http.get(`/tutorials?title=${title}`);
+const findByTitle = (description) => {
+  return http.get(`/tutorials?description=${description}`);
 };
 
 export default {
   getAll,
   create,
-  findByTitle
+  findByTitle,
 };

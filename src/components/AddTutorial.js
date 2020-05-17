@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import TutorialDataService from "../services/TutorialService";
-import Datetime from "react-datetime";
 import "./global.css";
 import "../App.css";
-
 import DisplayComponent from "./DisplayComponent";
 import BtnComponent from "./BtnComponent";
 
@@ -12,14 +10,15 @@ const AddTutorial = () => {
     id: null,
     title: "",
     description: "",
-    published: false
   };
+
   const [tutorial, setTutorial] = useState(initialTutorialState);
   const [submitted, setSubmitted] = useState(false);
   const [time, setTime] = useState({ ms: 0, s: 0, m: 0, h: 0 });
   const [interv, setInterv] = useState();
   const [status, setStatus] = useState(0);
-  var [dateandtime, setDateAndTime] = useState();
+  const [dateandtime] = useState(new Date().toLocaleString());
+  const [isVisible, setIsVisible] = useState(false);
 
   const start = () => {
     run();
@@ -52,9 +51,12 @@ const AddTutorial = () => {
   const stop = () => {
     clearInterval(interv);
     setStatus(2);
-    var curTime = new Date().toLocaleString();
-    console.log(curTime);
-    setDateAndTime(curTime);
+  };
+
+  const changeStatus = () => {
+    clearInterval(interv);
+    setStatus(3);
+    setIsVisible(true);
   };
 
   const reset = () => {
@@ -64,39 +66,42 @@ const AddTutorial = () => {
   };
 
   const resume = () => start();
-  const renderDay = (props, currentDate) => {
-    return <td {...props}>{currentDate.date()}</td>;
-  };
-  const renderMonth = (props, month) => {
-    return <td {...props}>{month}</td>;
-  };
-  const renderYear = (props, year) => {
-    return <td {...props}>{year % 100}</td>;
-  };
 
-  const handleInputChange = event => {
+  const handleInputChange = (event) => {
     const { name, value } = event.target;
     setTutorial({ ...tutorial, [name]: value });
+  };
+
+  const handleTimeChange = (event) => {
+    const { name, value } = event.target;
+    setTime({ ...time, [name]: value });
   };
 
   const saveTutorial = () => {
     var data = {
       title: tutorial.title,
-      description: tutorial.description
+      description: tutorial.description,
+      updatedS: time.s,
+      updatedM: time.m,
+      updatedH: time.h,
+      dateAndTime: dateandtime,
     };
 
     TutorialDataService.create(data)
-      .then(response => {
+      .then((response) => {
         setTutorial({
           id: response.data.id,
           title: response.data.title,
           description: response.data.description,
-          published: response.data.published
+          updatedS: response.data.updatedS,
+          updatedM: response.data.updatedM,
+          updatedH: response.data.updatedM,
         });
         setSubmitted(true);
         console.log(response.data);
+        setTime({ ms: 0, s: 0, m: 0, h: 0 });
       })
-      .catch(e => {
+      .catch((e) => {
         console.log(e);
       });
   };
@@ -104,6 +109,38 @@ const AddTutorial = () => {
   const newTutorial = () => {
     setTutorial(initialTutorialState);
     setSubmitted(false);
+  };
+  const startTimer = () => {
+    setStatus(0);
+  };
+  const maxLengthCheck = (object) => {
+    if (object.target.value.length > object.target.maxLength) {
+      object.target.value = object.target.value.slice(
+        0,
+        object.target.maxLength
+      );
+    }
+    if (object.target.value >= 24) {
+      object.target.value = 23;
+    }
+    if (object.target.value <= 0) {
+      object.target.value = 0;
+    }
+  };
+
+  const maxMinutesLengthCheck = (object) => {
+    if (object.target.value.length > object.target.maxLength) {
+      object.target.value = object.target.value.slice(
+        0,
+        object.target.maxLength
+      );
+    }
+    if (object.target.value >= 60) {
+      object.target.value = 59;
+    }
+    if (object.target.value <= 0) {
+      object.target.value = 0;
+    }
   };
 
   return (
@@ -116,9 +153,9 @@ const AddTutorial = () => {
           </button>
         </div>
       ) : (
-        <div>
+        <div className="form-bg">
           <div className="form-group">
-            <label htmlFor="title">Title</label>
+            <label htmlFor="title">Task</label>
             <input
               type="text"
               className="form-control"
@@ -128,9 +165,7 @@ const AddTutorial = () => {
               onChange={handleInputChange}
               name="title"
             />
-          </div>
 
-          <div className="form-group">
             <label htmlFor="description">Description</label>
             <input
               type="text"
@@ -141,32 +176,78 @@ const AddTutorial = () => {
               onChange={handleInputChange}
               name="description"
             />
-          </div>
+            {status === 3 ? (
+              <div>
+                <label htmlFor="description">Seconds</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="60"
+                  maxLength="2"
+                  onInput={maxMinutesLengthCheck}
+                  className="form-control"
+                  id="s"
+                  required
+                  value={time.s}
+                  onChange={handleTimeChange}
+                  name="s"
+                />
+                <label htmlFor="description">Minutes</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="60"
+                  maxLength="2"
+                  onInput={maxMinutesLengthCheck}
+                  className="form-control"
+                  id="s"
+                  required
+                  value={time.m}
+                  onChange={handleTimeChange}
+                  name="m"
+                />
+                <label htmlFor="description">Hours</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="23"
+                  maxLength="2"
+                  onInput={maxLengthCheck}
+                  className="form-control"
+                  id="s"
+                  required
+                  value={time.h}
+                  onChange={handleTimeChange}
+                  name="h"
+                />
+              </div>
+            ) : null}
 
+            <div className="clock-holder">
+              <div className="stopwatch">
+                <DisplayComponent time={time} />
+                <BtnComponent
+                  status={status}
+                  resume={resume}
+                  reset={reset}
+                  stop={stop}
+                  start={start}
+                />
+              </div>
+            </div>
+            <button onClick={changeStatus} className="btn btn-success">
+              Manual Time input
+            </button>
+            {isVisible ? (
+              <button onClick={startTimer} className="btn btn-success">
+                start timer
+              </button>
+            ) : null}
+          </div>
+          <br />
           <button onClick={saveTutorial} className="btn btn-success">
             Submit
           </button>
-          <div className="clock-holder">
-        <div className="stopwatch">
-          <DisplayComponent time={time} />
-          <BtnComponent
-            status={status}
-            resume={resume}
-            reset={reset}
-            stop={stop}
-            start={start}
-          />
-        </div>
-      </div>
-      <Datetime
-        renderDay={renderDay}
-        renderMonth={renderMonth}
-        renderYear={renderYear}
-      />
-      <br />
-      <p style={{ color: "white" }}>{dateandtime}</p>
-      <br />
-      <button className="button">Book</button>
         </div>
       )}
     </div>

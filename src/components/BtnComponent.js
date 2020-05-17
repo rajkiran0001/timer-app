@@ -51,6 +51,15 @@ function BtnComponent(props) {
       ) : (
         ""
       )}
+
+      {props.status === 3 ? (
+        <div>
+          <br />
+          <p>Manual mode</p>
+        </div>
+      ) : (
+        ""
+      )}
     </div>
   );
 }

@@ -1,53 +1,76 @@
 import React, { useState, useEffect } from "react";
 import TutorialDataService from "../services/TutorialService";
+import axios from "axios";
 
 const TutorialsList = () => {
   const [tutorials, setTutorials] = useState([]);
-  const [currentTutorial, setCurrentTutorial] = useState(null);
+  // const [currentTutorial, setCurrentTutorial] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [searchTitle, setSearchTitle] = useState("");
+  let [page, setPage] = useState(1);
 
   useEffect(() => {
     retrieveTutorials();
   }, []);
 
-  const onChangeSearchTitle = e => {
+  const onChangeSearchTitle = (e) => {
     const searchTitle = e.target.value;
     setSearchTitle(searchTitle);
   };
 
   const retrieveTutorials = () => {
     TutorialDataService.getAll()
-      .then(response => {
+      .then((response) => {
         setTutorials(response.data);
         console.log(response.data);
       })
-      .catch(e => {
+      .catch((e) => {
         console.log(e);
       });
   };
 
-  // const refreshList = () => {
-  //   retrieveTutorials(); 
-  //   setCurrentTutorial(null);
-  //   setCurrentIndex(-1);
-  // };
-
   const setActiveTutorial = (tutorial, index) => {
-    setCurrentTutorial(tutorial);
+    // setCurrentTutorial(tutorial);
     setCurrentIndex(index);
   };
 
-
   const findByTitle = () => {
     TutorialDataService.findByTitle(searchTitle)
-      .then(response => {
+      .then((response) => {
         setTutorials(response.data);
         console.log(response.data);
       })
-      .catch(e => {
+      .catch((e) => {
         console.log(e);
       });
+  };
+
+  const fetchPage = (page) => {
+    axios
+      .get(`http://localhost:8080/api/tutorials/?page=${page}&limit=10`)
+      .then((res) => {
+        console.log(res.data);
+
+        setTutorials(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const previousPage = () => {
+    if (page >= 2 && page <= 31) {
+      setPage((page = page - 1));
+      fetchPage(page);
+    }
+  };
+
+  //On everyclick increment the page by one
+  const nextPage = (e) => {
+    if (page >= 0 && page <= 29) {
+      setPage((page = page + 1));
+      fetchPage(page);
+    }
   };
 
   return (
@@ -72,7 +95,7 @@ const TutorialsList = () => {
           </div>
         </div>
       </div>
-      <div className="col-md-6">
+      <div className="col-md-12">
         <h4>Tutorials List</h4>
 
         <ul className="list-group">
@@ -85,35 +108,29 @@ const TutorialsList = () => {
                 onClick={() => setActiveTutorial(tutorial, index)}
                 key={index}
               >
+                <strong>Task Name: </strong>
                 {tutorial.title}
+                <strong> Description: </strong> {tutorial.description}{" "}
+                <strong>Date and Time: </strong>
+                {tutorial.dateAndTime} <strong>Spent Time: </strong>
+                {tutorial.updatedH}:{tutorial.updatedM}: {tutorial.updatedS}{" "}
+                (hh:mm:ss)
               </li>
             ))}
         </ul>
-
       </div>
-      <div className="col-md-6">
-        {currentTutorial ? (
-          <div>
-            <h4>Tutorial</h4>
-            <div>
-              <label>
-                <strong>Title:</strong>
-              </label>{" "}
-              {currentTutorial.title}
-            </div>
-            <div>
-              <label>
-                <strong>Description:</strong>
-              </label>{" "}
-              {currentTutorial.description}
-            </div>
-          </div>
-        ) : (
-          <div>
-            <br />
-            <p>Please click on a Tutorial...</p>
-          </div>
-        )}
+      <b>Page: {page >= 1 && page <= 29 ? page : "30"}</b>
+      <div>
+        <button
+          className="button"
+          data-test="pagination"
+          onClick={previousPage}
+        >
+          Previous Page
+        </button>
+        <button className="button" onClick={nextPage}>
+          Next Page
+        </button>
       </div>
     </div>
   );
